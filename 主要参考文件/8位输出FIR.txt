@@ -1,0 +1,50 @@
+module deserialize(
+    input CLK, // 25MHZ                                           
+    input RESET,//低电平复位                                                                
+    input [3:0] VAUXP, VAUXN,  // Auxiliary analog channel inputs，辅助模拟通道【3：0】                                                               
+    input VP, 
+    input VN,// Dedicated and Hardwired Analog Input Pair,专用模拟通道             
+    input din1,
+    output reg[7:0] dout
+);
+ 
+reg[7:0] data;
+reg[2:0] cnt;
+ 
+ 
+always@(negedge RESET, posedge CLK)
+begin
+	if(RESET == 1'b0)//reset signial
+	begin
+		data <= 0;
+		cnt <= 0;
+		dout <= 0;
+	end
+	
+	else
+	begin
+		if (cnt == 3'b111)//get all 8bit data,change dout
+		begin		
+			dout[7-cnt] <= din1;
+			dout[7:1] <= data[7:1];
+			cnt <= 0;
+		end
+		else
+		begin
+			data[7-cnt] <= din1;
+			cnt <= cnt + 1;
+		end		
+	end
+end
+  
+xadc_uart_tx_top xadc_u(
+    .CLK(CLK),                                      
+    .RESET(RESET),                                                        
+    .VAUXP(VAUXP),
+    .VAUXN(VAUXN),                                                         
+    .VP(VP),
+    .VN(VN),            
+    .tx(din1)                                                                                                                                                                               
+    );
+    
+endmodule
